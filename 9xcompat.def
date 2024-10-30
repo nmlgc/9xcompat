@@ -1,0 +1,6 @@
+EXPORTS
+	FlsAlloc
+	FlsFree
+	FlsGetValue
+	FlsSetValue
+	InitializeCriticalSectionEx
