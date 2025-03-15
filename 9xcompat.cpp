@@ -5,6 +5,12 @@ extern "C" {
 // Everything here is defined with a different DLL linkage than in the header.
 #pragma warning(disable: 4273)
 
+// State
+// -----
+
+HANDLE StringHeap = nullptr;
+// -----
+
 // C library
 // ---------
 
@@ -16,7 +22,47 @@ static int compat_wcscmp(const wchar_t *l, const wchar_t *r)
 	}
 	return ((*l < *r) ? -1 : (*l > *r));
 }
+
+static size_t compat_wcslen(const wchar_t *s)
+{
+	const wchar_t *p = s;
+	while(*p) {
+		p++;
+	}
+	return (p - s);
+}
 // ---------
+
+class ANSI_STRING {
+private:
+	LPSTR buf = nullptr;
+
+public:
+	ANSI_STRING(LPCWSTR str_w)
+	{
+		const auto default_char = '?';
+		const auto str_w_len = (compat_wcslen(str_w) + 1);
+		const auto str_a_len = WideCharToMultiByte(
+			CP_ACP, 0, str_w, str_w_len, nullptr, 0, &default_char, nullptr
+		);
+		buf = reinterpret_cast<LPSTR>(
+			HeapAlloc(StringHeap, HEAP_GENERATE_EXCEPTIONS, str_a_len)
+		);
+		WideCharToMultiByte(
+			CP_ACP, 0, str_w, str_w_len, buf, str_a_len, &default_char, nullptr
+		);
+	}
+
+	~ANSI_STRING()
+	{
+		HeapFree(StringHeap, 0, buf);
+	}
+
+	LPSTR data()
+	{
+		return buf;
+	}
+};
 
 DWORD WINAPI FlsAlloc(PFLS_CALLBACK_FUNCTION lpCallback)
 {
@@ -68,6 +114,7 @@ BOOL WINAPI _DllMainCRTStartup(
 	HINSTANCE instance, DWORD reason, LPVOID reserved
 )
 {
+	StringHeap = GetProcessHeap();
 	return TRUE;
 }
 
