@@ -84,6 +84,76 @@ BOOL WINAPI FlsSetValue(DWORD dwFlsIndex, PVOID lpFlsData)
 	return TlsSetValue(dwFlsIndex, lpFlsData);
 }
 
+extern "C++" template <class T> T* cast_to(LPVOID lp, DWORD dwBufferSize)
+{
+	if(dwBufferSize < sizeof(T)) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return nullptr;
+	}
+	return reinterpret_cast<T *>(lp);
+};
+
+BOOL WINAPI GetFileInformationByHandleEx(
+	HANDLE hFile,
+	FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
+	LPVOID lpfi,
+	DWORD lpfi_size
+)
+{
+	BY_HANDLE_FILE_INFORMATION bhfi;
+	if(!GetFileInformationByHandle(hFile, &bhfi)) {
+		return FALSE;
+	}
+
+	switch(FileInformationClass) {
+	case FileBasicInfo: {
+		auto *ret = cast_to<FILE_BASIC_INFO>(lpfi, lpfi_size);
+		if(!ret) {
+			return FALSE;
+		}
+		ret->CreationTime.HighPart = bhfi.ftCreationTime.dwHighDateTime;
+		ret->CreationTime.LowPart = bhfi.ftCreationTime.dwLowDateTime;
+		ret->LastAccessTime.HighPart = bhfi.ftLastAccessTime.dwHighDateTime;
+		ret->LastAccessTime.LowPart = bhfi.ftLastAccessTime.dwLowDateTime;
+		ret->LastWriteTime.HighPart = bhfi.ftLastWriteTime.dwHighDateTime;
+		ret->LastWriteTime.LowPart = bhfi.ftLastWriteTime.dwLowDateTime;
+		ret->ChangeTime.HighPart = bhfi.ftLastWriteTime.dwHighDateTime;
+		ret->ChangeTime.LowPart = bhfi.ftLastWriteTime.dwLowDateTime;
+		ret->FileAttributes = bhfi.dwFileAttributes;
+		break;
+	}
+	case FileStandardInfo: {
+		auto *ret = cast_to<FILE_STANDARD_INFO>(lpfi, lpfi_size);
+		if(!ret) {
+			return FALSE;
+		}
+		ret->AllocationSize.LowPart = bhfi.nFileSizeLow;
+		ret->AllocationSize.HighPart = bhfi.nFileSizeHigh;
+		ret->EndOfFile.LowPart = bhfi.nFileSizeLow;
+		ret->EndOfFile.HighPart = bhfi.nFileSizeHigh;
+		ret->NumberOfLinks = bhfi.nNumberOfLinks;
+		ret->DeletePending = FALSE;
+		ret->Directory = (
+			(bhfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+		);
+		break;
+	}
+	case FileAttributeTagInfo: {
+		auto *ret = cast_to<FILE_ATTRIBUTE_TAG_INFO>(lpfi, lpfi_size);
+		if(!ret) {
+			return FALSE;
+		}
+		ret->FileAttributes = bhfi.dwFileAttributes;
+		ret->ReparseTag = 0;
+		break;
+	}
+	default:
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return false;
+	}
+	return true;
+}
+
 int WINAPI GetLocaleInfoEx(
 	LPCWSTR lpLocaleName, LCTYPE LCType, LPWSTR lpLCData, int cchData
 )

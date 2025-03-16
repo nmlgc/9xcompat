@@ -3,5 +3,6 @@ EXPORTS
 	FlsFree
 	FlsGetValue
 	FlsSetValue
+	GetFileInformationByHandleEx
 	GetLocaleInfoEx
 	InitializeCriticalSectionEx
