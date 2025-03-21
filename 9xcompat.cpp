@@ -64,6 +64,33 @@ public:
 	}
 };
 
+HANDLE WINAPI FindFirstFileExW(
+	LPCWSTR lpFileName,
+	FINDEX_INFO_LEVELS fInfoLevelId,
+	LPVOID lpFindFileData,
+	FINDEX_SEARCH_OPS fSearchOp,
+	LPVOID lpSearchFilter,
+	DWORD dwAdditionalFlags
+)
+{
+	static decltype(FindFirstFileExW) *orig = nullptr;
+	if(!orig) {
+		orig = reinterpret_cast<decltype(orig)>(
+			GetProcAddress(GetModuleHandleA("kernel32.dll"), "FindFirstFileExW")
+		);
+	}
+
+	// Windows <7 doesn't support `FindExInfoBasic`.
+	return orig(
+		lpFileName,
+		FindExInfoStandard,
+		lpFindFileData,
+		fSearchOp,
+		lpSearchFilter,
+		dwAdditionalFlags
+	);
+}
+
 DWORD WINAPI FlsAlloc(PFLS_CALLBACK_FUNCTION lpCallback)
 {
 	return TlsAlloc();
