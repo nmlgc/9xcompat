@@ -1,3 +1,6 @@
+// We want access to the entirety of <windows.h>
+#undef _WIN32_WINNT
+
 #include <windows.h>
 
 extern "C" {
