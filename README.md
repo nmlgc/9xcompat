@@ -34,6 +34,26 @@ $ dumpbin /SYMBOLS libucrt.lib | grep InitializeCriticalSectionEx
 
 Basically, Visual Studio's pre-compiled CRT uses the regular Windows headers where all API functions are marked as `declspec(dllimport)`. This adds the `__imp__` prefix to their function names, and these names can only be resolved by a DLL import library. If we don't want to patch, recompile, or otherwise hack the CRT, our polyfilled functions therefore must be part of a DLL.
 
+Except…
+
+### But how can `unicows.lib` replace dynamic imports with statically linked thunks without complicating the link command line?
+
+MSLU uses .obj files with COFF alias records that redefine these `External` records as `WeakExternal` aliases of exported pointers to its wrapper functions. The only known and halfway convenient way of creating such records involves MASM's `ALIAS` directive.\
+In the C++ source file:
+
+```c++
+extern "C" auto ptr_WrappedTwoParameterFunction = &WrappedTwoParameterFunction;
+```
+
+In the ASM source file:
+
+```asm
+extrn _ptr_WrappedTwoParameterFunction:near
+alias <__imp__WrappedTwoParameterFunction@8> = <_ptr_WrappedTwoParameterFunction>
+```
+
+This enables MSLU-style static linking at the cost of three LOC per wrapped function.
+
 ## Scope
 
 For now, this repo only covers Win32 functions not supported on 9x that the Visual Studio CRT uses behind your back as part of C/C++ standard library implementations. I'm unsure whether this should evolve into a general 9x polyfill library for the entire Win32 API.
@@ -41,6 +61,18 @@ For now, this repo only covers Win32 functions not supported on 9x that the Visu
 No build system. They all suck in some way, and I don't want to pretend that any one of them is "the standard" or "recommended". It's just a single source file anyway.
 
 ## Building
+
+### Static library
+
+Compile and assemble both `9xcompat.cpp` and `aliases.asm`, and add them anywhere onto your link command line:
+
+```shell
+cl /c 9xcompat.cpp
+ml /c aliases.asm
+link […] 9xcompat.obj aliases.obj
+```
+
+### DLL
 
 We must build with a module definition file to ensure the original undecorated function names despite the `WINAPI` calling convention. The most minimal compilation command line is therefore:
 

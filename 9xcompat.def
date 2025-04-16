@@ -1,9 +1,9 @@
 EXPORTS
-	FindFirstFileExW
-	FlsAlloc
-	FlsFree
-	FlsGetValue
-	FlsSetValue
-	GetFileInformationByHandleEx
-	GetLocaleInfoEx
-	InitializeCriticalSectionEx
+	FindFirstFileExW=compat_FindFirstFileExW
+	FlsAlloc=compat_FlsAlloc
+	FlsFree=compat_FlsFree
+	FlsGetValue=compat_FlsGetValue
+	FlsSetValue=compat_FlsSetValue
+	GetFileInformationByHandleEx=compat_GetFileInformationByHandleEx
+	GetLocaleInfoEx=compat_GetLocaleInfoEx
+	InitializeCriticalSectionEx=compat_InitializeCriticalSectionEx

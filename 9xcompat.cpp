@@ -5,9 +5,6 @@
 
 extern "C" {
 
-// Everything here is defined with a different DLL linkage than in the header.
-#pragma warning(disable: 4273)
-
 // State
 // -----
 
@@ -67,7 +64,7 @@ public:
 	}
 };
 
-HANDLE WINAPI FindFirstFileExW(
+HANDLE WINAPI compat_FindFirstFileExW(
 	LPCWSTR lpFileName,
 	FINDEX_INFO_LEVELS fInfoLevelId,
 	LPVOID lpFindFileData,
@@ -94,22 +91,22 @@ HANDLE WINAPI FindFirstFileExW(
 	);
 }
 
-DWORD WINAPI FlsAlloc(PFLS_CALLBACK_FUNCTION lpCallback)
+DWORD WINAPI compat_FlsAlloc(PFLS_CALLBACK_FUNCTION lpCallback)
 {
 	return TlsAlloc();
 }
 
-BOOL WINAPI FlsFree(DWORD dwFlsIndex)
+BOOL WINAPI compat_FlsFree(DWORD dwFlsIndex)
 {
 	return TlsFree(dwFlsIndex);
 }
 
-PVOID WINAPI FlsGetValue(DWORD dwFlsIndex)
+PVOID WINAPI compat_FlsGetValue(DWORD dwFlsIndex)
 {
 	return TlsGetValue(dwFlsIndex);
 }
 
-BOOL WINAPI FlsSetValue(DWORD dwFlsIndex, PVOID lpFlsData)
+BOOL WINAPI compat_FlsSetValue(DWORD dwFlsIndex, PVOID lpFlsData)
 {
 	return TlsSetValue(dwFlsIndex, lpFlsData);
 }
@@ -123,7 +120,7 @@ extern "C++" template <class T> T* cast_to(LPVOID lp, DWORD dwBufferSize)
 	return reinterpret_cast<T *>(lp);
 };
 
-BOOL WINAPI GetFileInformationByHandleEx(
+BOOL WINAPI compat_GetFileInformationByHandleEx(
 	HANDLE hFile,
 	FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
 	LPVOID lpfi,
@@ -184,7 +181,7 @@ BOOL WINAPI GetFileInformationByHandleEx(
 	return true;
 }
 
-int WINAPI GetLocaleInfoEx(
+int WINAPI compat_GetLocaleInfoEx(
 	LPCWSTR lpLocaleName, LCTYPE LCType, LPWSTR lpLCData, int cchData
 )
 {
@@ -201,7 +198,7 @@ int WINAPI GetLocaleInfoEx(
 	return (ret / sizeof(wchar_t));
 }
 
-BOOL WINAPI InitializeCriticalSectionEx(
+BOOL WINAPI compat_InitializeCriticalSectionEx(
 	LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags
 )
 {
@@ -217,5 +214,14 @@ BOOL WINAPI _DllMainCRTStartup(
 	StringHeap = GetProcessHeap();
 	return TRUE;
 }
+
+auto ptr_FindFirstFileExW = &compat_FindFirstFileExW;
+auto ptr_FlsAlloc = &compat_FlsAlloc;
+auto ptr_FlsFree = &compat_FlsFree;
+auto ptr_FlsGetValue = &compat_FlsGetValue;
+auto ptr_FlsSetValue = &compat_FlsSetValue;
+auto ptr_GetFileInformationByHandleEx = &compat_GetFileInformationByHandleEx;
+auto ptr_GetLocaleInfoEx = &compat_GetLocaleInfoEx;
+auto ptr_InitializeCriticalSectionEx = &compat_InitializeCriticalSectionEx;
 
 } // extern "C"
