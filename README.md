@@ -38,7 +38,7 @@ Except…
 
 ### But how can `unicows.lib` replace dynamic imports with statically linked thunks without complicating the link command line?
 
-MSLU uses .obj files with COFF alias records that redefine these `External` records as `WeakExternal` aliases of exported pointers to its wrapper functions. The only known and halfway convenient way of creating such records involves MASM's `ALIAS` directive.\
+MSLU uses .obj files with COFF alias records that redefine these `External` records as `WeakExternal` aliases of exported pointers to its wrapper functions. The only known and halfway convenient way of creating such records involves MASM's `ALIAS` directive. The widely suggested `#pragma comment(linker, "/ALTERNATENAME:")` or `__declspec(selectany)` do *not* work in this case – they can only be used to redirect *nonexistent* symbols, and all the Win32 API functions are already present on the default link command lines we want to support.\
 In the C++ source file:
 
 ```c++
@@ -52,7 +52,8 @@ extrn _ptr_WrappedTwoParameterFunction:near
 alias <__imp__WrappedTwoParameterFunction@8> = <_ptr_WrappedTwoParameterFunction>
 ```
 
-This enables MSLU-style static linking at the cost of three LOC per wrapped function.
+This enables MSLU-style static linking at the cost of three LOC per wrapped function.\
+Note that we need these separate pointers because DLL-imported functions are always called indirectly. When linking these pre-compiled static libraries, the linker can only rewrite the *address* of these pointers within the `CALL` or `JMP` instruction; it can't change the instructions themselves into their direct equivalents. Thus, we can merely point these calls or jumps to different pointers, not to the absolute addresses of the wrapped functions.
 
 ## Scope
 
