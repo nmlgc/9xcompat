@@ -88,3 +88,19 @@ Linking to the DLL requires a similar trick to make sure that `9xcompat.lib` is 
 ```shell
 link […] /NODEFAULTLIB:kernel32.lib 9xcompat.lib kernel32.lib […]
 ```
+
+## Comparison with related projects
+
+All of these use a similar technique of thunking Win32 API functions via compile-time COFF alias records.
+
+| Project              | Target OS | Target compiler and libc                          | Maintenance status                                  |
+| -------------------- | --------- | ------------------------------------------------- | --------------------------------------------------- |
+| **9xcompat**         | 98        | Visual Studio 2022, `cl`                          | Developed as part of [ReC98]'s backporting projects |
+| [EnlyzeWinCompatLib] | NT 4.0    | Visual Studio ≥2019,  `clang-cl` with custom libc | Original goal achieved, inactive                    |
+| [YY-Thunks]          | 2000      | Visual Studio ≥6                                  | Active                                              |
+
+----
+
+[EnlyzeWinCompatLib]: https://github.com/enlyze/EnlyzeWinCompatLib
+[ReC98]: https://rec98.nmlgc.net/blog/2025-04-25
+[YY-Thunks]: https://github.com/Chuyu-Team/YY-Thunks
